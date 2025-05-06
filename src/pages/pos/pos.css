@@ -1,0 +1,137 @@
+.pos-parent {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(9, 1fr);
+  grid-column-gap: 0px;
+  grid-row-gap: 0px;
+  height: 100vh;
+  background-color: rgba(165, 165, 165, 0.719);
+}
+
+.pos-div1 {
+  grid-area: 1 / 1 / 3 / 7;
+  /* background-color: yellowgreen; */
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  align-items: center;
+}
+.pos-div2 {
+  grid-area: 3 / 1 / 10 / 5;
+  /* background-color: aqua; */
+  padding: 10px;
+}
+.pos-div3 {
+  grid-area: 3 / 5 / 10 / 7;
+  /* background-color: red; */
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+/* POS Item Table Styles */
+.pos-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--card-color);
+  color: var(--text-color);
+  border-radius: 8px;
+  overflow: hidden;
+  table-layout: fixed; /* Important for fixed column widths */
+}
+
+.pos-table th,
+.pos-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Set fixed widths */
+.pos-table th:nth-child(1),
+.pos-table td:nth-child(1) {
+  width: 40%; /* Item Name */
+}
+
+.pos-table th:nth-child(2),
+.pos-table td:nth-child(2) {
+  width: 20%; /* Price */
+}
+
+.pos-table th:nth-child(3),
+.pos-table td:nth-child(3) {
+  width: 20%; /* Qty */
+}
+
+.pos-table th:nth-child(4),
+.pos-table td:nth-child(4) {
+  width: 20%; /* Total */
+}
+
+.pos-table thead {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.pos-customer-div {
+  width: 55%;
+  display: flex;
+  align-items: center;
+  height: 90px;
+  justify-content: space-between;
+  padding: 0px 5px;
+}
+.pos-customer-input-div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.customer-search {
+  position: relative;
+  width: 600px;
+}
+
+.pos-date-div {
+  width: 40%;
+  display: flex;
+  height: 90px;
+  align-items: center;
+  gap: 10px;
+}
+.pos-date-input {
+  width: 350px;
+  height: 35px;
+}
+
+.pos-item-search-div {
+  margin: 20px auto;
+}
+
+.pos-div3-inputs {
+  width: 100%;
+  height: 50px;
+  background-color: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 30px;
+  letter-spacing: 1px;
+}
+.pos-payment-method-btn-div {
+  display: flex;
+  gap: 20px;
+}
+
+.pos-enter {
+  background-color: var(--primary-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  width: 100%;
+  height: 50px;
+  font-size: 32px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin: 20px auto;
+}

@@ -1,38 +1,42 @@
-.App {
-  text-align: center;
+:root {
+  /* Primary Colors */
+  --primary-color: #2e86de; /* Vivid Blue - for buttons and highlights */
+  --primary-dark: #1b4f72; /* Dark Blue - for headers or nav bars */
+  --primary-light: #d6eaf8; /* Light Blue - for backgrounds or hover effects */
+
+  /* Secondary Colors */
+  --secondary-color: #28b463; /* Green - for success and confirmation */
+  --warning-color: #f39c12; /* Orange - for alerts or warnings */
+  --error-color: #e74c3c; /* Red - for errors or decline actions */
+  --info-color: #5dade2; /* Sky Blue - for info notifications */
+
+  /* Neutral Colors */
+  --background-color: #f4f6f7; /* Light Gray - background of the system */
+  --card-color: #ffffff; /* White - for cards/panels */
+  --text-color: #2c3e50; /* Dark Gray - for body text */
+  --text-light: #7f8c8d; /* Light Gray - for secondary text */
+  --border-color: #d5dbdb; /* Light Border Gray */
+
+  /* Accent */
+  --accent-color: #a569bd; /* Purple - for optional accents or highlights */
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.label-1 {
+  font-size: 23px;
+  font-family: "Courier New", Courier, monospace;
+  font-weight: 600;
+  line-height: 5px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.btn-1 {
+  padding: 10px 15px;
+  background-color: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.input-1 {
+  background-color: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
 }
