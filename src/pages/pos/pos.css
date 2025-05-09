@@ -135,3 +135,85 @@
   text-transform: uppercase;
   margin: 20px auto;
 }
+
+.pos-over-panel {
+  z-index: 2;
+  background-color: rgba(139, 139, 139, 0.445);
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pos-add-customer-div {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  background-color: aliceblue;
+  padding: 30px 60px;
+}
+
+.pos-customer-input-div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.pos-customer-input-p {
+}
+.pos-customer-input {
+  background-color: var(--card-color);
+  border: 1px solid var(--border-color);
+  width: 30vw;
+  height: 30px;
+}
+.pos-customer-btn-div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  margin-top: 10px;
+}
+
+/* customer view and select */
+.pos-view-customer-div {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  background-color: aliceblue;
+  padding: 30px 60px;
+}
+.pos-customer-view-div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.pos-customer-view-input {
+  background-color: var(--card-color);
+  border: 1px solid var(--border-color);
+  width: 30vw;
+  height: 30px;
+}
+
+/* Item view and select panel */
+.pos-view-item-div {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  background-color: aliceblue;
+  padding: 30px 60px;
+}
+.pos-item-btn-div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.pos-item-btn-div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  margin-top: 10px;
+}
