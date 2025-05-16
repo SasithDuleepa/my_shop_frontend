@@ -37,6 +37,8 @@ export default function Pos() {
     bill_items: [],
   });
 
+  //current Item Data
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       console.log(e.key);
@@ -88,13 +90,25 @@ export default function Pos() {
     console.log("Selected customer:", selectedOption.data);
   };
 
+  //get item batchers
+  const GetItemBatchers = async () => {
+    console.log("get item batch called!");
+    try {
+      const res = await axios.get(`http://localhost:8080/batch/item/item-5`);
+      console.log(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const [itemOptions, setItemOptions] = useState();
   const SearchItem = async (input) => {
     if (!input) return;
     try {
       const res = await axios.get(`http://localhost:8080/item/search/${input}`);
+      // console.log(res.data);
       const result = res.data.map((item) => ({
-        value: item.Item_id,
+        value: item.item_id,
         label: item.item_name, // change based on your API data
         data: {
           item_name: item.item_name,
@@ -108,9 +122,20 @@ export default function Pos() {
       console.error("Item search failed", err);
     }
   };
-  const handleItemSelect = (selectedOption) => {
-    console.log("Selected item:", selectedOption.data);
+  const handleItemSelect = async (selectedOption) => {
+    console.log("Selected item:", selectedOption);
+    GetItemBatchers();
     setIsOpenItemView(true);
+
+    //fetch data about an Item
+    try {
+      const res = await axios.get(
+        `http://localhost:8080/batch/${selectedOption.value}`
+      );
+      // console.log(res.data);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   //customer add
