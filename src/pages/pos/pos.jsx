@@ -25,6 +25,17 @@ export default function Pos() {
 
   const [customerOptions, setCustomerOptions] = useState([]);
   const [inputValue, setInputValue] = useState("");
+  const dateTime =
+    new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString();
+  //bill data
+  const [billData, setBillData] = useState({
+    bill_id: "",
+    bill_date: dateTime,
+    bill_time: "",
+    bill_customer: "",
+    bill_total: "",
+    bill_items: [],
+  });
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -138,13 +149,19 @@ export default function Pos() {
           </div>
           <div className="pos-date-div">
             <p className="label-1"> Date :</p>
-            <input className="input-1 pos-date-input" />
+            <input
+              className="input-1 pos-date-input"
+              value={dateTime}
+              disabled
+            />
           </div>
         </div>
         <div class="pos-div2">
           <div className="pos-item-search-div">
             <p className="label-1">Search Item :</p>
             <Select
+              // isClearable={true}
+              // defaultValue={null}
               options={itemOptions}
               ref={selectItemSearchRef}
               placeholder="Search item"
@@ -297,21 +314,33 @@ export default function Pos() {
 
           {isOpenItemView && (
             <div className="pos-view-item-div">
-              <p>Item</p>
+              <p>Item Name</p>
               <div className="pos-item-input-div">
-                <p className="label-1">Item Id :</p>
-                <input className="pos-customer-input" disabled />
-              </div>
-              <div className="pos-item-input-div">
-                <p className="label-1">Item Name :</p>
-                <input className="pos-customer-input" />
+                <p className="label-1">Batch Id :</p>
+                <Select />
               </div>
               <div className="pos-item-input-div">
                 <p className="label-1">Item Price :</p>
+                <input className="pos-customer-input" disabled />
+              </div>
+              <div className="pos-item-input-div">
+                <p className="label-1">Selling Price :</p>
                 <input className="pos-customer-input" />
               </div>
               <div className="pos-item-input-div">
-                <p className="label-1">Item Quantity :</p>
+                <p className="label-1">Available Qty. : Sku</p>
+                <input className="pos-customer-input" />
+              </div>
+              <div className="pos-item-input-div">
+                <p className="label-1">Item Quantity : Sku</p>
+                <input className="pos-customer-input" />
+              </div>
+              <div className="pos-item-input-div">
+                <p className="label-1">Discount rate : %</p>
+                <input className="pos-customer-input" />
+              </div>
+              <div className="pos-item-input-div">
+                <p className="label-1">Discount Value :</p>
                 <input className="pos-customer-input" />
               </div>
               <div className="pos-item-btn-div">
