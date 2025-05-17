@@ -10,6 +10,9 @@ export default function Pos() {
   const [isOpenCustomerAdd, setIsOpenCustomerAdd] = useState(false);
   const [isOpenCustomerView, setIsOpenCustomerView] = useState(false);
   const [isOpenItemView, setIsOpenItemView] = useState(false);
+  const [isOpenBatchSelect, setIsOpenBatchSelect] = useState(true);
+
+  const [isBarcodeSearch, setIsBarcodeSearch] = useState(false);
 
   const selectCustomerRef = useRef(null);
   const selectItemSearchRef = useRef(null);
@@ -23,6 +26,11 @@ export default function Pos() {
 
   const [itemList, setItemList] = useState([]);
 
+  const [batchers, setBatchers] = useState([]);
+
+  const [batchId, setBatchId] = useState(null); //current selected batch id
+  const [itemData, setItemData] = useState({}); //hold item data until set qty and added to bill data
+
   const [customerOptions, setCustomerOptions] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const dateTime =
@@ -34,14 +42,27 @@ export default function Pos() {
     bill_time: "",
     bill_customer: "",
     bill_total: "",
-    bill_items: [],
+    bill_items: [
+      {
+        item_name: "",
+        item_id: "",
+        batch_id: "",
+        buy_price: "",
+        createdAt: "",
+        exp_date: "",
+        manufacture_date: "",
+        quantity: "",
+        sell_price: "",
+        updatedAt: "",
+      },
+    ],
   });
 
   //current Item Data
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      console.log(e.key);
+      // console.log(e.key);
       if (e.key === "F4") {
         e.preventDefault();
         setIsOpenCustomerAdd(true);
@@ -104,23 +125,87 @@ export default function Pos() {
   const [itemOptions, setItemOptions] = useState();
   const SearchItem = async (input) => {
     if (!input) return;
-    try {
-      const res = await axios.get(`http://localhost:8080/item/search/${input}`);
-      // console.log(res.data);
-      const result = res.data.map((item) => ({
-        value: item.item_id,
-        label: item.item_name, // change based on your API data
-        data: {
-          item_name: item.item_name,
-          item_price: item.item_price,
-          item_quantity: item.item_quantity,
-          item_id: item.Item_id,
-        },
-      }));
-      setItemOptions(result);
-    } catch (err) {
-      console.error("Item search failed", err);
+    if (isBarcodeSearch) {
+      try {
+        const res = await axios.get(`http://localhost:8080/batch/${input}`);
+        console.log("item barcode Search data", res.data);
+
+        //if have more than one item
+        if (res.data.length > 1) {
+          setIsOpenBatchSelect(true);
+
+          setBatchId(res.data[1].batch_id);
+
+          setBatchers(res.data);
+        } else {
+          setIsOpenItemView(true);
+        }
+
+        const result = res.data.map((item) => ({
+          value: item.item_id,
+          label: item.item_name, // change based on your API data
+          data: {
+            item_name: item.item_name,
+            item_price: item.item_price,
+            item_quantity: item.item_quantity,
+            item_id: item.Item_id,
+          },
+        }));
+        setItemOptions(result);
+      } catch (err) {
+        console.error("Item search failed", err);
+      }
+    } else {
+      try {
+        const res = await axios.get(
+          `http://localhost:8080/item/search/${input}`
+        );
+        console.log("item Name Search data", res.data);
+
+        const result = res.data.map((item) => ({
+          value: item.item_id,
+          label: item.item_name, // change based on your API data
+          data: {
+            item_name: item.item_name,
+            item_price: item.item_price,
+            item_quantity: item.item_quantity,
+            item_id: item.Item_id,
+          },
+        }));
+        setItemOptions(result);
+      } catch (err) {
+        console.error("Item search failed", err);
+      }
     }
+  };
+
+  //if have more batchers, can select one batch by selecting an item
+  const handleBatchSelect = async (selectedOption) => {
+    console.log("Selected batch:", selectedOption);
+    console.log("Selected item:", batchers[selectedOption]);
+    // setIsOpenItemView(true);
+    // setIsOpenBatchSelect(false);
+
+    //add data to itemData
+    setItemData(batchers[selectedOption]);
+    // setItemData((prevBillData) => ({
+    //   ...prevBillData,
+    //   bill_items: [
+    //     ...prevBillData.bill_items,
+    //     {
+    //       item_name: batchers[selectedOption].Item.item_name,
+    //       item_id: batchers[selectedOption].item_id,
+    //       batch_id: batchers[selectedOption].batch_id,
+    //       buy_price: batchers[selectedOption].buy_price,
+    //       createdAt: batchers[selectedOption].createdAt,
+    //       exp_date: batchers[selectedOption].exp_date,
+    //       manufacture_date: batchers[selectedOption].manufacture_date,
+    //       quantity: batchers[selectedOption].quantity,
+    //       sell_price: batchers[selectedOption].sell_price,
+    //       updatedAt: batchers[selectedOption].updatedAt,
+    //     },
+    //   ],
+    // }));
   };
   const handleItemSelect = async (selectedOption) => {
     console.log("Selected item:", selectedOption);
@@ -136,6 +221,12 @@ export default function Pos() {
     } catch (error) {
       console.log(error);
     }
+  };
+
+  //batch select ok
+  const handleBatchSelectOk = () => {
+    setIsOpenBatchSelect(false);
+    setIsOpenItemView(true);
   };
 
   //customer add
@@ -184,6 +275,13 @@ export default function Pos() {
         <div class="pos-div2">
           <div className="pos-item-search-div">
             <p className="label-1">Search Item :</p>
+            <label>Barcode search :</label>
+            <input
+              type="checkbox"
+              value={isBarcodeSearch}
+              onChange={() => setIsBarcodeSearch(!isBarcodeSearch)}
+            />
+
             <Select
               // isClearable={true}
               // defaultValue={null}
@@ -207,14 +305,15 @@ export default function Pos() {
               </tr>
             </thead>
             <tbody>
-              {PosData.map((item, index) => (
-                <tr key={index}>
-                  <td>{item.item_name}</td>
-                  <td>Rs. {item.item_price}</td>
-                  <td>{item.item_quantity}</td>
-                  <td>Rs. {item.price * item.quantity}</td>
-                </tr>
-              ))}
+              {/* {billData.bill_items.length > 0 &&
+                billData.bill_items.map((item, index) => (
+                  <tr key={index}>
+                    <td>{item.item_name}</td>
+                    <td>Rs. {item.item_price}</td>
+                    <td>{item.item_quantity}</td>
+                    <td>Rs. {item.price * item.quantity}</td>
+                  </tr>
+                ))} */}
             </tbody>
           </table>
         </div>
@@ -248,7 +347,10 @@ export default function Pos() {
         </div>
       </div>
 
-      {isOpenCustomerAdd || isOpenCustomerView || isOpenItemView ? (
+      {isOpenCustomerAdd ||
+      isOpenCustomerView ||
+      isOpenItemView ||
+      isOpenBatchSelect ? (
         <div className="pos-over-panel">
           {isOpenCustomerAdd && (
             <div className="pos-add-customer-div">
@@ -337,36 +439,98 @@ export default function Pos() {
             </div>
           )}
 
+          {isOpenBatchSelect && (
+            <div className="pos-view-item-div">
+              <p>Batch Id : {batchId}</p>
+              <div className="pos-item-input-div">
+                <p className="label-1">Select Item :</p>
+                {/* <Select options={batchers} /> */}
+                <select onChange={(e) => handleBatchSelect(e.target.value)}>
+                  {batchers.map((item, index) => (
+                    <option key={index} value={index}>
+                      {item.Item.item_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="pos-item-btn-div">
+                <button
+                  className="btn-add"
+                  onClick={() => handleBatchSelectOk()}
+                >
+                  Select
+                </button>
+                <button
+                  className="btn-cancel"
+                  onClick={() => {
+                    setIsOpenBatchSelect(false);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
           {isOpenItemView && (
             <div className="pos-view-item-div">
-              <p>Item Name</p>
+              <p>Item Name : {itemData.Item.item_name}</p>
               <div className="pos-item-input-div">
                 <p className="label-1">Batch Id :</p>
                 <Select />
               </div>
               <div className="pos-item-input-div">
                 <p className="label-1">Item Price :</p>
-                <input className="pos-customer-input" disabled />
+                <input
+                  className="pos-customer-input"
+                  value={itemData.buy_price}
+                  disabled
+                />
               </div>
               <div className="pos-item-input-div">
                 <p className="label-1">Selling Price :</p>
-                <input className="pos-customer-input" />
+                <input
+                  className="pos-customer-input"
+                  value={itemData.sell_price}
+                />
               </div>
               <div className="pos-item-input-div">
-                <p className="label-1">Available Qty. : Sku</p>
-                <input className="pos-customer-input" />
+                <p className="label-1">Available Qty. : {itemData.Item.sku}</p>
+                <input
+                  className="pos-customer-input"
+                  value={itemData.quantity}
+                />
               </div>
               <div className="pos-item-input-div">
-                <p className="label-1">Item Quantity : Sku</p>
-                <input className="pos-customer-input" />
+                <p className="label-1">Item Quantity : {itemData.Item.sku}</p>
+                <input
+                  className="pos-customer-input"
+                  type="number"
+                  value={itemData.qty || 0}
+                  onChange={(e) => {
+                    setItemData({ ...itemData, qty: e.target.value });
+                  }}
+                />
               </div>
               <div className="pos-item-input-div">
                 <p className="label-1">Discount rate : %</p>
-                <input className="pos-customer-input" />
+                <input
+                  className="pos-customer-input"
+                  value={itemData.discountRate}
+                  onChange={(e) => {
+                    setItemData({ ...itemData, discountRate: e.target.value });
+                  }}
+                />
               </div>
               <div className="pos-item-input-div">
                 <p className="label-1">Discount Value :</p>
-                <input className="pos-customer-input" />
+                <input
+                  className="pos-customer-input"
+                  value={itemData.discountValue}
+                  onChange={(e) => {
+                    setItemData({ ...itemData, discountValue: e.target.value });
+                  }}
+                />
               </div>
               <div className="pos-item-btn-div">
                 <button className="btn-add">Save</button>
