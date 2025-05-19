@@ -3,20 +3,19 @@ import axios from "axios";
 import hotkeys from "hotkeys-js";
 
 import "./pos.css";
-import PosData from "../../utils/posdata";
 import Select from "react-select";
 
 export default function Pos() {
+  //for hotkeys
   const [isOpenCustomerAdd, setIsOpenCustomerAdd] = useState(false);
   const [isOpenCustomerView, setIsOpenCustomerView] = useState(false);
   const [isOpenItemView, setIsOpenItemView] = useState(false);
   const [isOpenBatchSelect, setIsOpenBatchSelect] = useState(false);
 
-  const [isBarcodeSearch, setIsBarcodeSearch] = useState(false);
+  const [isBarcodeSearch, setIsBarcodeSearch] = useState(false); //if search by barcode
 
   const selectCustomerRef = useRef(null);
   const selectItemSearchRef = useRef(null);
-
   const customerSaveOkRef = useRef(null);
   const custometSaveCancelRef = useRef(null);
   const customerSelectOkRef = useRef(null);
@@ -24,15 +23,13 @@ export default function Pos() {
   const itemSelectOkRef = useRef(null);
   const itemSelectCancelRef = useRef(null);
 
-  const [itemList, setItemList] = useState([]);
+  const [customerOptions, setCustomerOptions] = useState([]);
+  const [inputValue, setInputValue] = useState("");
 
-  const [batchers, setBatchers] = useState([]);
+  const [batchers, setBatchers] = useState([]); // if have multiple batchers for an item store that batches
 
   const [batchId, setBatchId] = useState(null); //current selected batch id
   const [itemData, setItemData] = useState({}); //hold item data until set qty and added to bill data
-
-  const [customerOptions, setCustomerOptions] = useState([]);
-  const [inputValue, setInputValue] = useState("");
 
   //item view batch
   const [itemBatch, setItemBatch] = useState([]);
@@ -132,34 +129,20 @@ export default function Pos() {
     if (isBarcodeSearch) {
       try {
         const res = await axios.get(`http://localhost:8080/batch/${input}`);
-        // console.log("item barcode Search data", res.data);
+        console.log("barcode item search", res.data);
 
         //if have more than one item
         if (res.data.length > 1) {
           setIsOpenBatchSelect(true);
-
           setBatchId(res.data[1].batch_id);
-
           setBatchers(res.data);
+          console.log("multiple batch ids found !");
         } else {
           //if have single batch
           setIsOpenItemView(true);
-          console.log("single batch called!", res.data);
-
+          console.log("single batch id found!");
           setItemData(res.data[0]);
         }
-
-        // const result = res.data.map((item) => ({
-        //   value: item.item_id,
-        //   label: item.item_name, // change based on your API data
-        //   data: {
-        //     item_name: item.item_name,
-        //     item_price: item.item_price,
-        //     item_quantity: item.item_quantity,
-        //     item_id: item.Item_id,
-        //   },
-        // }));
-        // setItemOptions(result);
       } catch (err) {
         console.error("Item search failed", err);
       }
@@ -189,32 +172,8 @@ export default function Pos() {
 
   //if have more batchers, can select one batch by selecting an item
   const handleBatchSelect = async (selectedOption) => {
-    console.log("selected item", selectedOption);
-    // console.log("Selected batch:", selectedOption);
-    // console.log("Selected item:", batchers[selectedOption]);
-    // setIsOpenItemView(true);
-    // setIsOpenBatchSelect(false);
-
-    //add data to itemData
-    // setItemData(batchers[selectedOption]);
-    // setItemData((prevBillData) => ({
-    //   ...prevBillData,
-    //   bill_items: [
-    //     ...prevBillData.bill_items,
-    //     {
-    //       item_name: batchers[selectedOption].Item.item_name,
-    //       item_id: batchers[selectedOption].item_id,
-    //       batch_id: batchers[selectedOption].batch_id,
-    //       buy_price: batchers[selectedOption].buy_price,
-    //       createdAt: batchers[selectedOption].createdAt,
-    //       exp_date: batchers[selectedOption].exp_date,
-    //       manufacture_date: batchers[selectedOption].manufacture_date,
-    //       quantity: batchers[selectedOption].quantity,
-    //       sell_price: batchers[selectedOption].sell_price,
-    //       updatedAt: batchers[selectedOption].updatedAt,
-    //     },
-    //   ],
-    // }));
+    console.log("selected item", batchers[selectedOption]);
+    setItemData(batchers[selectedOption]);
   };
 
   const handleItemSelect = async (selectedOption) => {
@@ -304,6 +263,7 @@ export default function Pos() {
       sell_price: selectedOption.data.sell_price,
       qty: 1,
       quantity: selectedOption.data.quantity,
+      item_id: selectedOption.data.item_id,
     }));
   };
 
@@ -320,8 +280,8 @@ export default function Pos() {
   };
   return (
     <div>
-      <div class="pos-parent">
-        <div class="pos-div1">
+      <div className="pos-parent">
+        <div className="pos-div1">
           <div className="pos-customer-div">
             <div className="pos-customer-input-div">
               <p className="label-1"> Customer :</p>
@@ -357,7 +317,7 @@ export default function Pos() {
             />
           </div>
         </div>
-        <div class="pos-div2">
+        <div className="pos-div2">
           <div className="pos-item-search-div">
             <p className="label-1">Search Item :</p>
             <label>Barcode search :</label>
@@ -374,7 +334,6 @@ export default function Pos() {
               ref={selectItemSearchRef}
               placeholder="Search item"
               onInputChange={(input) => {
-                setInputValue(input);
                 SearchItem(input);
               }}
               onChange={(selectedOption) => handleItemSelect(selectedOption)}
@@ -405,7 +364,7 @@ export default function Pos() {
             </tbody>
           </table>
         </div>
-        <div class="pos-div3">
+        <div className="pos-div3">
           <div>
             <p className="label-1">Net Total :</p>
             <input className="pos-div3-inputs" value={100000.0} />
