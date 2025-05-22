@@ -112,17 +112,6 @@ export default function Pos() {
     console.log("Selected customer:", selectedOption.data);
   };
 
-  //get item batchers
-  const GetItemBatchers = async () => {
-    console.log("get item batch called!");
-    try {
-      const res = await axios.get(`http://localhost:8080/batch/item/item-5`);
-      console.log(res.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   const [itemOptions, setItemOptions] = useState();
   const SearchItem = async (input) => {
     if (!input) return;
@@ -155,7 +144,7 @@ export default function Pos() {
 
         const result = res.data.map((item) => ({
           value: item.item_id,
-          label: item.item_name, // change based on your API data
+          label: item.item_name,
           data: {
             item_name: item.item_name,
             item_price: item.item_price,
@@ -163,7 +152,7 @@ export default function Pos() {
             item_id: item.item_id,
           },
         }));
-        setItemOptions(result);
+        setItemOptions(result); // here not data of batchers
       } catch (err) {
         console.error("Item search failed", err);
       }
@@ -187,7 +176,7 @@ export default function Pos() {
     console.log("current item data", itemData);
     setIsOpenItemView(true);
 
-    //fetch data about an Item
+    //fetch data about an Item batch
     try {
       const res = await axios.get(
         `http://localhost:8080/batch/item/${selectedOption.value}`
@@ -195,7 +184,7 @@ export default function Pos() {
       console.log("called batchers", res.data);
       const result = res.data.map((batch) => ({
         value: batch.batch_id,
-        label: batch.batch_id, // change based on your API data
+        label: batch.batch_id,
         data: {
           batch_id: batch.batch_id,
           buy_price: batch.buy_price,
@@ -264,6 +253,8 @@ export default function Pos() {
       qty: 1,
       quantity: selectedOption.data.quantity,
       item_id: selectedOption.data.item_id,
+      updatedAt: selectedOption.data.updatedAt,
+      createdAt: selectedOption.data.createdAt,
     }));
   };
 
@@ -277,6 +268,11 @@ export default function Pos() {
   //customer add
   const AddCustomer = () => {
     setIsOpenCustomerAdd(false);
+  };
+
+  //enter bill
+  const EnterBill = () => {
+    console.log("Bill data", billData);
   };
   return (
     <div>
@@ -389,7 +385,9 @@ export default function Pos() {
             <input className="pos-div3-inputs" />
           </div>
           <div>
-            <button className="pos-enter">enter</button>
+            <button className="pos-enter" onClick={() => EnterBill()}>
+              enter
+            </button>
           </div>
         </div>
       </div>
@@ -536,6 +534,7 @@ export default function Pos() {
                 <input
                   className="pos-customer-input"
                   value={itemData.buy_price}
+                  onChange={() => {}}
                   disabled
                 />
               </div>
@@ -544,6 +543,9 @@ export default function Pos() {
                 <input
                   className="pos-customer-input"
                   value={itemData.sell_price}
+                  onChange={(e) => {
+                    setItemData({ ...itemData, sell_price: e.target.value });
+                  }}
                 />
               </div>
               <div className="pos-item-input-div">
@@ -561,7 +563,7 @@ export default function Pos() {
                 <input
                   className="pos-customer-input"
                   type="number"
-                  value={itemData.qty || 0}
+                  value={itemData.qty || 1}
                   onChange={(e) => {
                     setItemData({ ...itemData, qty: e.target.value });
                   }}
