@@ -1,16 +1,14 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import hotkeys from "hotkeys-js";
+import { debounce } from "../../utils/debounce"; // Import debounce utility
 
 import "./pos.css";
 import Select from "react-select";
 
 export default function Pos() {
   //for hotkeys
-  const [isOpenCustomerAdd, setIsOpenCustomerAdd] = useState(false);
-  const [isOpenCustomerView, setIsOpenCustomerView] = useState(false);
-  const [isOpenItemView, setIsOpenItemView] = useState(false);
-  const [isOpenBatchSelect, setIsOpenBatchSelect] = useState(false);
+  const [activeModal, setActiveModal] = useState(null); // consolidated modal state
 
   const [isBarcodeSearch, setIsBarcodeSearch] = useState(false); //if search by barcode
 
@@ -34,12 +32,12 @@ export default function Pos() {
   //item view batch
   const [itemBatch, setItemBatch] = useState([]);
 
-  const dateTime =
-    new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString();
+  const [currentDateTime, setCurrentDateTime] = useState(''); // Initialize with empty string
+
   //bill data
   const [billData, setBillData] = useState({
     bill_id: "",
-    bill_date: dateTime,
+    bill_date: "", // Initialize with empty string, will be set in useEffect
     bill_time: "",
     bill_customer: "",
     bill_total: "",
@@ -62,11 +60,21 @@ export default function Pos() {
   //current Item Data
 
   useEffect(() => {
+    const now = new Date();
+    const formattedDateTime = now.toLocaleDateString() + " " + now.toLocaleTimeString();
+    setCurrentDateTime(formattedDateTime);
+    setBillData(prevBillData => ({
+      ...prevBillData,
+      bill_date: formattedDateTime
+    }));
+  }, []); // Empty dependency array ensures this runs only once on mount
+
+  useEffect(() => {
     const handleKeyDown = (e) => {
       // console.log(e.key);
       if (e.key === "F4") {
         e.preventDefault();
-        setIsOpenCustomerAdd(true);
+        setActiveModal('customerAdd');
       }
       if (e.ctrlKey && e.key === "F1") {
         e.preventDefault();
@@ -81,83 +89,101 @@ export default function Pos() {
       if (e.key === "Shift") {
         console.log("shift clicked!");
         e.preventDefault();
-        if (isOpenCustomerAdd) customerSaveOkRef.current?.click();
-        else if (isOpenCustomerView) customerSelectOkRef.current?.click();
-        else if (isOpenItemView) itemSelectOkRef.current?.click();
+        if (activeModal === 'customerAdd') customerSaveOkRef.current?.click();
+        else if (activeModal === 'customerView') customerSelectOkRef.current?.click();
+        else if (activeModal === 'itemView') itemSelectOkRef.current?.click();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [activeModal]);
 
-  const SearchCustomer = async (input) => {
-    if (!input) return;
-    try {
-      const res = await axios.get(
-        `http://localhost:8080/customer/search/${input}`
-      );
-      const result = res.data.map((cust) => ({
-        value: cust._id,
-        label: cust.customer_name, // change based on your API data
-        data: cust,
-      }));
-      setCustomerOptions(result);
-    } catch (err) {
-      console.error("Customer search failed", err);
-    }
-  };
+  // Debounced search functions
+  const debouncedSearchCustomer = useCallback(
+    debounce(async (input) => {
+      if (!input) {
+        setCustomerOptions([]); // Clear options if input is empty
+        return;
+      }
+      try {
+        // Note: API base URL is configured in the .env file (REACT_APP_API_BASE_URL)
+        const res = await axios.get(
+          `${process.env.REACT_APP_API_BASE_URL}/customer/search/${input}`
+        );
+        const result = res.data.map((cust) => ({
+          value: cust._id,
+          label: cust.customer_name, // change based on your API data
+          data: cust,
+        }));
+        setCustomerOptions(result);
+      } catch (err) {
+        console.error("Customer search failed", err);
+        setCustomerOptions([]); // Clear options on error
+      }
+    }, 300),
+    [] // Empty dependency array means this callback is created once
+  );
+
   const handleCustomerSelect = (selectedOption) => {
-    setIsOpenCustomerView(true);
+    setActiveModal('customerView');
     console.log("Selected customer:", selectedOption.data);
   };
 
   const [itemOptions, setItemOptions] = useState();
-  const SearchItem = async (input) => {
-    if (!input) return;
-    if (isBarcodeSearch) {
-      try {
-        const res = await axios.get(`http://localhost:8080/batch/${input}`);
-        console.log("barcode item search", res.data);
+  const debouncedSearchItem = useCallback(
+    debounce(async (input) => {
+      if (!input) {
+        setItemOptions([]); // Clear options if input is empty
+        return;
+      }
+      if (isBarcodeSearch) {
+        try {
+          const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/batch/${input}`);
+          console.log("barcode item search", res.data);
 
-        //if have more than one item
-        if (res.data.length > 1) {
-          setIsOpenBatchSelect(true);
-          setBatchId(res.data[1].batch_id);
-          setBatchers(res.data);
-          console.log("multiple batch ids found !");
-        } else {
-          //if have single batch
-          setIsOpenItemView(true);
-          console.log("single batch id found!");
-          setItemData(res.data[0]);
+          //if have more than one item
+          if (res.data.length > 1) {
+            setActiveModal('batchSelect');
+            setBatchId(res.data[1].batch_id);
+            setBatchers(res.data);
+            console.log("multiple batch ids found !");
+          } else {
+            //if have single batch
+            setActiveModal('itemView');
+            console.log("single batch id found!");
+            setItemData(res.data[0]);
+          }
+        } catch (err) {
+          console.error("Item search failed", err);
+          setItemOptions([]); // Clear options on error
         }
-      } catch (err) {
-        console.error("Item search failed", err);
-      }
-    } else {
-      try {
-        const res = await axios.get(
-          `http://localhost:8080/item/search/${input}`
-        );
-        console.log("item Name Search data", res.data);
+      } else {
+        try {
+          const res = await axios.get(
+            `${process.env.REACT_APP_API_BASE_URL}/item/search/${input}`
+          );
+          console.log("item Name Search data", res.data);
 
-        const result = res.data.map((item) => ({
-          value: item.item_id,
-          label: item.item_name,
-          data: {
-            item_name: item.item_name,
-            item_price: item.item_price,
-            item_quantity: item.item_quantity,
-            item_id: item.item_id,
-          },
-        }));
-        setItemOptions(result); // here not data of batchers
-      } catch (err) {
-        console.error("Item search failed", err);
+          const result = res.data.map((item) => ({
+            value: item.item_id,
+            label: item.item_name,
+            data: {
+              item_name: item.item_name,
+              item_price: item.item_price,
+              item_quantity: item.item_quantity,
+              item_id: item.item_id,
+            },
+          }));
+          setItemOptions(result); // here not data of batchers
+        } catch (err) {
+          console.error("Item search failed", err);
+          setItemOptions([]); // Clear options on error
+        }
       }
-    }
-  };
+    }, 300),
+    [isBarcodeSearch] // Re-create if isBarcodeSearch changes
+  );
 
   //if have more batchers, can select one batch by selecting an item
   const handleBatchSelect = async (selectedOption) => {
@@ -174,12 +200,12 @@ export default function Pos() {
       Item: { item_name: selectedOption.label },
     }));
     console.log("current item data", itemData);
-    setIsOpenItemView(true);
+    setActiveModal('itemView');
 
     //fetch data about an Item batch
     try {
       const res = await axios.get(
-        `http://localhost:8080/batch/item/${selectedOption.value}`
+        `${process.env.REACT_APP_API_BASE_URL}/batch/item/${selectedOption.value}`
       );
       console.log("called batchers", res.data);
       const result = res.data.map((batch) => ({
@@ -205,29 +231,24 @@ export default function Pos() {
 
   //batch select ok
   const handleBatchSelectOk = () => {
-    setIsOpenBatchSelect(false);
-    setIsOpenItemView(true);
+    setActiveModal('itemView');
   };
 
   //item qty , etc. save
   const SaveItem = () => {
-    setIsOpenItemView(false);
+    setActiveModal(null);
     setBillData((prevBillData) => ({
       ...prevBillData,
       bill_items: [
         ...prevBillData.bill_items,
         {
-          item_name: itemData.Item.item_name,
+          // Essential fields for the bill item
+          item_name: itemData.Item?.item_name, // Added optional chaining for safety
           item_id: itemData.item_id,
-          batch_id: itemData.batch_id,
-          buy_price: itemData.buy_price,
-          createdAt: itemData.createdAt,
-          exp_date: itemData.exp_date,
-          manufacture_date: itemData.manufacture_date,
-          qty: itemData.qty,
-          quantity: itemData.quantity,
-          sell_price: itemData.sell_price,
-          updatedAt: itemData.updatedAt,
+          batch_id: itemData.batch_id, // Will be undefined if not applicable, which is fine
+          qty: itemData.qty, // Quantity for this bill
+          sell_price: itemData.sell_price, // Selling price for this bill transaction
+          // Removed: buy_price, createdAt, exp_date, manufacture_date, quantity (available stock), updatedAt
         },
       ],
     }));
@@ -260,14 +281,14 @@ export default function Pos() {
 
   //when click item in bill load again open item view
   const handleBillItemSelect = (item) => {
-    setIsOpenItemView(true);
+    setActiveModal('itemView');
     console.log(item);
     // setItemData(item);
   };
 
   //customer add
   const AddCustomer = () => {
-    setIsOpenCustomerAdd(false);
+    setActiveModal(null);
   };
 
   //enter bill
@@ -286,7 +307,7 @@ export default function Pos() {
                 className="customer-search"
                 onInputChange={(input) => {
                   setInputValue(input);
-                  SearchCustomer(input);
+                  debouncedSearchCustomer(input);
                 }}
                 options={customerOptions}
                 placeholder="Search customer"
@@ -298,7 +319,7 @@ export default function Pos() {
             </div>
             <button
               className="btn-1"
-              onClick={() => setIsOpenCustomerAdd(true)}
+              onClick={() => setActiveModal('customerAdd')}
             >
               ADD
             </button>
@@ -308,7 +329,7 @@ export default function Pos() {
             <p className="label-1"> Date :</p>
             <input
               className="input-1 pos-date-input"
-              value={dateTime}
+              value={currentDateTime} // Use state variable from useEffect
               disabled
             />
           </div>
@@ -330,7 +351,8 @@ export default function Pos() {
               ref={selectItemSearchRef}
               placeholder="Search item"
               onInputChange={(input) => {
-                SearchItem(input);
+                // Call debounced search item
+                debouncedSearchItem(input);
               }}
               onChange={(selectedOption) => handleItemSelect(selectedOption)}
             />
@@ -392,12 +414,9 @@ export default function Pos() {
         </div>
       </div>
 
-      {isOpenCustomerAdd ||
-      isOpenCustomerView ||
-      isOpenItemView ||
-      isOpenBatchSelect ? (
+      {activeModal ? (
         <div className="pos-over-panel">
-          {isOpenCustomerAdd && (
+          {activeModal === 'customerAdd' && (
             <div className="pos-add-customer-div">
               <p>Add Customer</p>
               <div className="pos-customer-input-div">
@@ -432,7 +451,7 @@ export default function Pos() {
                 <button
                   className="btn-cancel"
                   onClick={() => {
-                    setIsOpenCustomerAdd(false);
+                    setActiveModal(null);
                   }}
                 >
                   Cancel
@@ -441,7 +460,7 @@ export default function Pos() {
             </div>
           )}
 
-          {isOpenCustomerView && (
+          {activeModal === 'customerView' && (
             <div className="pos-view-customer-div">
               <p>Customer</p>
               <div className="pos-customer-view-div">
@@ -476,7 +495,7 @@ export default function Pos() {
                 <button className="btn-add">Conform</button>
                 <button
                   className="btn-cancel"
-                  onClick={() => setIsOpenCustomerView(false)}
+                  onClick={() => setActiveModal(null)}
                 >
                   Cancel
                 </button>
@@ -484,7 +503,7 @@ export default function Pos() {
             </div>
           )}
 
-          {isOpenBatchSelect && (
+          {activeModal === 'batchSelect' && (
             <div className="pos-view-item-div">
               <p>Batch Id : {batchId}</p>
               <div className="pos-item-input-div">
@@ -508,7 +527,7 @@ export default function Pos() {
                 <button
                   className="btn-cancel"
                   onClick={() => {
-                    setIsOpenBatchSelect(false);
+                    setActiveModal(null);
                   }}
                 >
                   Cancel
@@ -517,7 +536,7 @@ export default function Pos() {
             </div>
           )}
 
-          {isOpenItemView && (
+          {activeModal === 'itemView' && (
             <div className="pos-view-item-div">
               <p>Item Name : {itemData.Item.item_name}</p>
               <div className="pos-item-input-div">
@@ -596,7 +615,7 @@ export default function Pos() {
                 <button
                   className="btn-cancel"
                   onClick={() => {
-                    setIsOpenItemView(false);
+                    setActiveModal(null);
                   }}
                 >
                   Cancel
