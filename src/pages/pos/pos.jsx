@@ -197,7 +197,30 @@ export default function Pos() {
           updatedAt: batch.updatedAt,
         },
       }));
-      setItemBatch(result);
+      setItemBatch(result); // This sets the options for the batch dropdown
+
+      // Add logic here:
+      // 1. Check if `result` is not empty.
+      // 2. If it's not empty, take `result[0]` (the first batch).
+      // 3. Update the `itemData` state with the details of this first batch.
+      //    This can be done by calling `setItemData` similar to how `handleBatchSelectChange` does it.
+      if (result && result.length > 0) {
+        const firstBatch = result[0];
+        setItemData(prevData => ({
+          ...prevData, // Retains Item: { item_name: selectedOption.label }
+          batch_id: firstBatch.value, // or firstBatch.data.batch_id
+          buy_price: firstBatch.data.buy_price,
+          exp_date: firstBatch.data.exp_date,
+          manufacture_date: firstBatch.data.manufacture_date,
+          sell_price: firstBatch.data.sell_price,
+          qty: 1, // Default quantity
+          quantity: firstBatch.data.quantity, // Available quantity for this batch
+          item_id: firstBatch.data.item_id, // This should be the item_id from the batch data
+          // Add any other relevant fields from firstBatch.data
+          updatedAt: firstBatch.data.updatedAt,
+          createdAt: firstBatch.data.createdAt,
+        }));
+      }
     } catch (error) {
       console.log(error);
     }
@@ -524,9 +547,11 @@ export default function Pos() {
                 <p className="label-1">Batch Id :</p>
                 <Select
                   options={itemBatch}
+                  value={itemBatch.find(option => option.value === itemData.batch_id) || null}
                   onChange={(selectedOption) =>
                     handleBatchSelectChange(selectedOption)
                   }
+                  placeholder="Select a batch"
                 />
               </div>
               <div className="pos-item-input-div">
