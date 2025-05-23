@@ -23,6 +23,11 @@ export default function Pos() {
   const itemSelectOkRef = useRef(null);
   const itemSelectCancelRef = useRef(null);
 
+  const customerViewSaveOkRef = useRef(null);
+  const batchSelectOkRef = useRef(null);
+  const itemViewSaveOkRef = useRef(null);
+  const posEnterButtonRef = useRef(null);
+
   const [customerOptions, setCustomerOptions] = useState([]);
   const [inputValue, setInputValue] = useState("");
 
@@ -63,7 +68,6 @@ export default function Pos() {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // console.log(e.key);
       if (e.key === "F4") {
         e.preventDefault();
         setIsOpenCustomerAdd(true);
@@ -78,18 +82,34 @@ export default function Pos() {
         selectItemSearchRef.current?.focus(); // ✅ works
       }
 
-      if (e.key === "Shift") {
-        console.log("shift clicked!");
+      if (e.key === "Enter") {
         e.preventDefault();
-        if (isOpenCustomerAdd) customerSaveOkRef.current?.click();
-        else if (isOpenCustomerView) customerSelectOkRef.current?.click();
-        else if (isOpenItemView) itemSelectOkRef.current?.click();
+        if (isOpenCustomerAdd) {
+          customerSaveOkRef.current?.click();
+        } else if (isOpenCustomerView) {
+          customerViewSaveOkRef.current?.click();
+        } else if (isOpenBatchSelect) {
+          batchSelectOkRef.current?.click();
+        } else if (isOpenItemView) {
+          itemViewSaveOkRef.current?.click();
+        } else {
+          posEnterButtonRef.current?.click();
+        }
+      } else if (e.key === "Shift") {
+        e.preventDefault();
+        if (isOpenCustomerAdd) {
+          customerSaveOkRef.current?.click();
+        } else if (isOpenCustomerView) {
+          customerViewSaveOkRef.current?.click(); // Updated ref
+        } else if (isOpenItemView) {
+          itemViewSaveOkRef.current?.click(); // Updated ref
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [isOpenCustomerAdd, isOpenCustomerView, isOpenBatchSelect, isOpenItemView]);
 
   const SearchCustomer = async (input) => {
     if (!input) return;
@@ -122,10 +142,24 @@ export default function Pos() {
 
         //if have more than one item
         if (res.data.length > 1) {
+          setBatchers(res.data); // Set batchers first
           setIsOpenBatchSelect(true);
-          setBatchId(res.data[1].batch_id);
-          setBatchers(res.data);
-          console.log("multiple batch ids found !");
+          const firstBatch = res.data[0];
+          setBatchId(firstBatch.batch_id); // Set batchId to the first batch's ID
+          setItemData({ // Pre-select first batch's data
+            Item: { item_name: firstBatch.Item.item_name },
+            batch_id: firstBatch.batch_id,
+            buy_price: firstBatch.buy_price,
+            createdAt: firstBatch.createdAt,
+            exp_date: firstBatch.exp_date,
+            item_id: firstBatch.item_id,
+            manufacture_date: firstBatch.manufacture_date,
+            quantity: firstBatch.quantity,
+            sell_price: firstBatch.sell_price,
+            updatedAt: firstBatch.updatedAt,
+            qty: 1, // Default quantity
+          });
+          console.log("multiple batch ids found, first item auto-selected!");
         } else {
           //if have single batch
           setIsOpenItemView(true);
@@ -496,7 +530,7 @@ export default function Pos() {
                 <input className="pos-customer-view-input" disabled />
               </div>
               <div className="pos-customer-btn-div">
-                <button className="btn-add">save</button>
+                <button ref={customerViewSaveOkRef} className="btn-add">save</button>
                 <button
                   className="btn-cancel"
                   onClick={() => setIsOpenCustomerView(false)}
@@ -523,6 +557,7 @@ export default function Pos() {
               </div>
               <div className="pos-item-btn-div">
                 <button
+                  ref={batchSelectOkRef}
                   className="btn-add"
                   onClick={() => handleBatchSelectOk()}
                 >
@@ -619,7 +654,7 @@ export default function Pos() {
                 />
               </div>
               <div className="pos-item-btn-div">
-                <button className="btn-add" onClick={() => SaveItem()}>
+                <button ref={itemViewSaveOkRef} className="btn-add" onClick={() => SaveItem()}>
                   Save
                 </button>
                 <button
