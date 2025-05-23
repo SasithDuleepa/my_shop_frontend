@@ -206,7 +206,7 @@ export default function Pos() {
       //    This can be done by calling `setItemData` similar to how `handleBatchSelectChange` does it.
       if (result && result.length > 0) {
         const firstBatch = result[0];
-        setItemData(prevData => ({
+        setItemData((prevData) => ({
           ...prevData, // Retains Item: { item_name: selectedOption.label }
           batch_id: firstBatch.value, // or firstBatch.data.batch_id
           buy_price: firstBatch.data.buy_price,
@@ -496,7 +496,7 @@ export default function Pos() {
                 <input className="pos-customer-view-input" disabled />
               </div>
               <div className="pos-customer-btn-div">
-                <button className="btn-add">Conform</button>
+                <button className="btn-add">save</button>
                 <button
                   className="btn-cancel"
                   onClick={() => setIsOpenCustomerView(false)}
@@ -526,7 +526,7 @@ export default function Pos() {
                   className="btn-add"
                   onClick={() => handleBatchSelectOk()}
                 >
-                  Select
+                  save
                 </button>
                 <button
                   className="btn-cancel"
@@ -547,7 +547,11 @@ export default function Pos() {
                 <p className="label-1">Batch Id :</p>
                 <Select
                   options={itemBatch}
-                  value={itemBatch.find(option => option.value === itemData.batch_id) || null}
+                  value={
+                    itemBatch.find(
+                      (option) => option.value === itemData.batch_id
+                    ) || null
+                  }
                   onChange={(selectedOption) =>
                     handleBatchSelectChange(selectedOption)
                   }
