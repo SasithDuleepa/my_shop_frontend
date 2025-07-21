@@ -2,10 +2,10 @@ import React from "react";
 
 export default function AddItem() {
   return (
-    <div className="col-center">
+    <div className="col-center page">
       <h1> Add Item </h1>
 
-      <div className="">
+      <div className="center">
         <p>Select Item :</p>
         <input />
       </div>
@@ -45,6 +45,11 @@ export default function AddItem() {
         <div className="center">
           <p>Quantity :</p>
           <input className="input-2" />
+        </div>
+
+        <div className="btn-div">
+          <button className="btn-add">Save</button>
+          <button className="btn-cancel">Cancel</button>
         </div>
       </div>
     </div>

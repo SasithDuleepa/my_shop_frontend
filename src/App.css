@@ -53,6 +53,13 @@
   font-weight: 600;
 }
 
+.btn-div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 50px;
+}
+
 .input-1 {
   background-color: var(--card-color);
   border: 1px solid var(--border-color);
@@ -69,8 +76,9 @@
 .center {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 50px;
+  width: max-content;
 }
 .col-center {
   display: flex;
@@ -85,4 +93,16 @@
   padding: 50px;
   margin: 0px 0px;
   width: min-content;
+}
+
+.page {
+  margin: 30px 60px;
+}
+
+.container-sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 50px;
+  width: max-content;
 }
